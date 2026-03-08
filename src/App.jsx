@@ -101,6 +101,22 @@ export default function App() {
     setTimeout(() => setToast(""), 3500);
   };
 
+    // ----- CHECK CODE (rejoin existing) -----
+    const handleCodeCheck = async () => {
+      if (!formCode.trim()) return setError("Enter the invite code.");
+      setError("");
+      const comp = await getCompetitionByCode(formCode.trim().toUpperCase());
+      if (!comp) return setError("No competition with that code. Check with your mates.");
+      const existing = await getPlayerByAuthUid(comp.id, authUser.uid);
+      if (existing) {
+        setCompId(comp.id);
+        localStorage.setItem("fc:compId", comp.id);
+        setError("");
+        return;
+      }
+      setView("joinFull");
+    };
+
   // ---- AUTH LISTENER ----
   useEffect(() => {
     const unsub = onAuthChange((user) => {
@@ -157,7 +173,7 @@ export default function App() {
     } else if (!compId) {
       setView("home");
     } else if (currentPlayer) {
-      if (view === "home" || view === "auth" || view === "join") {
+      if (view === "home" || view === "auth" || view === "join" || view === "joinFull") {
         setView("dashboard");
       }
     } else if (compId && !currentPlayer) {
@@ -735,36 +751,54 @@ export default function App() {
     );
   }
 
-  // ---- JOIN VIEW ----
-  if (view === "join") {
-    return (
-      <div style={S.app}>
-        <div style={S.noise} />
-        <div style={S.container}>
-          <div style={S.title}>Cat Funts TBL</div>
-          <div style={S.subtitle}>Join the Pain</div>
-          {error && <div style={S.errorMsg}>{error}</div>}
-          <div style={S.card}>
-            <div style={S.cardTitle}>Your Details</div>
-            <input style={S.input} placeholder="Your name" value={formName} onChange={(e) => setFormName(e.target.value)} />
-            <input style={S.input} placeholder="Nickname (optional)" value={formNickname} onChange={(e) => setFormNickname(e.target.value)} />
-            <div style={S.unitToggle}>
-              {["kg", "lbs", "st"].map((u) => (
-                <button key={u} style={unitBtnStyle(formUnit === u)} onClick={() => setFormUnit(u)}>{u}</button>
-              ))}
+    // ----- JOIN VIEW -----
+    if (view === "join") {
+      return (
+        <div style={S.app}>
+          <div style={S.noise} />
+          <div style={S.container}>
+            <div style={S.title}>Cat Funts TBL</div>
+            <div style={S.subtitle}>Join the Pain</div>
+            {error && <div style={S.errorMsg}>{error}</div>}
+            <div style={S.card}>
+              <div style={S.cardTitle}>Invite Code</div>
+              <input style={S.input} placeholder="Enter code from your mate" value={formCode} onChange={(e) => setFormCode(e.target.value)} />
             </div>
-            <input style={S.input} placeholder={`Starting weight (${formUnit})`} type="number" step="0.1" value={formWeight} onChange={(e) => setFormWeight(e.target.value)} />
+            <button style={S.btnPrimary} onClick={handleCodeCheck}>Check Code</button>
+            <button style={S.btnGhost} onClick={() => { setView("home"); setError(""); }}>Back</button>
           </div>
-          <div style={S.card}>
-            <div style={S.cardTitle}>Invite Code</div>
-            <input style={S.input} placeholder="Enter code from your mate" value={formCode} onChange={(e) => setFormCode(e.target.value)} maxLength={12} />
-          </div>
-          <button style={S.btnPrimary} onClick={handleJoin}>I'm In, Let's Go</button>
-          <button style={S.btnGhost} onClick={() => { setView("home"); setError(""); }}>← Back</button>
         </div>
-      </div>
-    );
-  }
+      );
+    }
+
+    // ----- JOIN FULL VIEW (new player details) -----
+    if (view === "joinFull") {
+      return (
+        <div style={S.app}>
+          <div style={S.noise} />
+          <div style={S.container}>
+            <div style={S.title}>Cat Funts TBL</div>
+            <div style={S.subtitle}>Join the Pain</div>
+            {error && <div style={S.errorMsg}>{error}</div>}
+            <div style={S.card}>
+              <div style={S.cardTitle}>Your Details</div>
+              <input style={S.input} placeholder="Your name" value={formName} onChange={(e) => setFormName(e.target.value)} />
+              <input style={S.input} placeholder="Nickname (optional)" value={formNickname} onChange={(e) => setFormNickname(e.target.value)} />
+              <div style={S.unitToggle}>
+                {["kg", "lbs", "st"].map((u) => (
+                  <button key={u} style={unitBtnStyle(formUnit === u)} onClick={() => setFormUnit(u)}>
+                    {u}
+                  </button>
+                ))}
+              </div>
+              <input style={S.input} placeholder={`Starting weight (${formUnit})`} value={formWeight} onChange={(e) => setFormWeight(e.target.value)} type="number" inputMode="decimal" />
+            </div>
+            <button style={S.btnPrimary} onClick={handleJoin}>I'm In, Let's Go</button>
+            <button style={S.btnGhost} onClick={() => { setView("join"); setError(""); }}>Back</button>
+          </div>
+        </div>
+      );
+    }
 
   // ---- BANTER VIEW (after weigh-in) ----
   if (view === "banter") {
