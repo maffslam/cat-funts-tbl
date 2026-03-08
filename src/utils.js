@@ -158,9 +158,9 @@ export const calcDailyPctLoss = (prevWeight, currentWeight, daysBetween) => {
 
 /** Default sprint config matching the spec */
 export const DEFAULT_SPRINTS = [
-  { number: 1, startWeek: 1, endWeek: 3, prizePercent: 15 },
-  { number: 2, startWeek: 4, endWeek: 7, prizePercent: 15 },
-  { number: 3, startWeek: 8, endWeek: 11, prizePercent: 15 },
+  { number: 1, startWeek: 1, endWeek: 4, prizePercent: 15 },
+  { number: 2, startWeek: 5, endWeek: 8, prizePercent: 15 },
+  { number: 3, startWeek: 9, endWeek: 11, prizePercent: 15 },
 ];
 
 export const OVERALL_PRIZE_PERCENT = 55;
@@ -181,6 +181,45 @@ export const calculateSprintsFromDates = (startDate, endDate) => {
     { number: 2, startWeek: s1 + 1, endWeek: s1 + s2, prizePercent: 15 },
     { number: 3, startWeek: s1 + s2 + 1, endWeek: totalWeeks, prizePercent: 15 },
   ];
+};
+
+
+/** Get exact calendar date ranges for each sprint */
+export const getSprintDateRanges = (startDate, sprints) => {
+  const s = startDate instanceof Date ? startDate : new Date(startDate);
+  return sprints.map(sprint => {
+    const sprintStart = new Date(s);
+    sprintStart.setDate(s.getDate() + (sprint.startWeek - 1) * 7);
+    const sprintEnd = new Date(s);
+    sprintEnd.setDate(s.getDate() + sprint.endWeek * 7 - 1);
+    return { ...sprint, dateStart: sprintStart, dateEnd: sprintEnd };
+  });
+};
+
+/** Format a date as "D Mon" e.g. "9 Mar" */
+export const fmtDateShort = (d) => {
+  const date = d instanceof Date ? d : new Date(d);
+  return date.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
+};
+
+/** Get weigh-in window dates for a given sprint */
+export const getWeighInDates = (startDate, sprint, weighInWindow) => {
+  const s = startDate instanceof Date ? startDate : new Date(startDate);
+  const dayMap = { Sunday: 0, Monday: 1, Tuesday: 2, Wednesday: 3, Thursday: 4, Friday: 5, Saturday: 6 };
+  const results = [];
+  for (let w = sprint.startWeek; w <= sprint.endWeek; w++) {
+    const weekStart = new Date(s);
+    weekStart.setDate(s.getDate() + (w - 1) * 7);
+    const startDay = dayMap[weighInWindow.dayStart] || 6;
+    const endDay = dayMap[weighInWindow.dayEnd] || 0;
+    const wiStart = new Date(weekStart);
+    wiStart.setDate(weekStart.getDate() + ((startDay - weekStart.getDay() + 7) % 7));
+    const wiEnd = new Date(weekStart);
+    wiEnd.setDate(weekStart.getDate() + ((endDay - weekStart.getDay() + 7) % 7));
+    if (wiEnd < wiStart) wiEnd.setDate(wiEnd.getDate() + 7);
+    results.push({ week: w, wiStart, wiEnd, timeStart: weighInWindow.timeStart, timeEnd: weighInWindow.timeEnd });
+  }
+  return results;
 };
 
 /** Get next Monday from a given date (or today if it is Monday) */

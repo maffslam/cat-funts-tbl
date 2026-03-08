@@ -25,6 +25,9 @@ import {
   buildLeaderboard, getWallOfShame, calcWeeklyKudos,
   generateRoundUp, calcConsolationPrizes,
   calculateSprintsFromDates, getNextMonday, toISODate,
+  getSprintDateRanges,
+  fmtDateShort,
+  getWeighInDates,
 } from "./utils.js";
 
 import {
@@ -608,12 +611,14 @@ export default function App() {
   const allSprintData = useMemo(() => {
     if (!competition) return [];
     const sprints = competition.sprints || DEFAULT_SPRINTS;
-    return sprints.map((s) => ({
+    const sprintDates = startDate ? getSprintDateRanges(startDate, sprints) : sprints;
+    return sprintDates.map((s) => ({
       sprint: s,
       results: calcSprintResults(s, players, weighins, startDate),
       weeksLeft: Math.max(0, s.endWeek - currentWeek + 1),
       isActive: currentWeek >= s.startWeek && currentWeek <= s.endWeek,
       isComplete: currentWeek > s.endWeek,
+      weighInDates: startDate && competition.weighInWindow ? getWeighInDates(startDate, s, competition.weighInWindow) : [],
     }));
   }, [competition, players, weighins, startDate, currentWeek]);
 
@@ -1104,14 +1109,21 @@ export default function App() {
             {/* Prize structure */}
             <div style={S.card}>
               <div style={S.cardTitle}>Prize Structure</div>
-              {(competition?.sprints || DEFAULT_SPRINTS).map((s) => (
-                <div key={s.number} style={{ ...S.row, justifyContent: "space-between" }}>
-                  <span style={{ fontWeight: 600 }}>Sprint {s.number} (Wks {s.startWeek}–{s.endWeek})</span>
+              {allSprintData.map((sd) => (
+              <div key={sd.sprint.number} style={{ ...S.row, justifyContent: "space-between", flexDirection: "column", gap: 4 }}>
+                <div style={{ display: "flex", justifyContent: "space-between", width: "100%" }}>
+                  <span style={{ fontWeight: 600 }}>Sprint {sd.sprint.number} (Wks {sd.sprint.startWeek}–{sd.sprint.endWeek})</span>
                   <span style={{ color: COLOURS.gold, fontWeight: 700 }}>
-                    {s.prizePercent}% • {competition?.currency || "£"}{Math.round(totalPot * s.prizePercent / 100)}
+                    {sd.sprint.prizePercent}% • {competition?.currency || "£"}{Math.round(totalPot * sd.sprint.prizePercent / 100)}
                   </span>
                 </div>
-              ))}
+                {sd.sprint.dateStart && (
+                  <div style={{ fontSize: 12, color: COLOURS.muted }}>
+                    {fmtDateShort(sd.sprint.dateStart)} – {fmtDateShort(sd.sprint.dateEnd)}
+                  </div>
+                )}
+              </div>
+            ))}
               <div style={{ ...S.row, justifyContent: "space-between", borderBottom: "none" }}>
                 <span style={{ fontWeight: 600 }}>Overall Champion</span>
                 <span style={{ color: COLOURS.gold, fontWeight: 700 }}>
@@ -1133,6 +1145,19 @@ export default function App() {
                     <span style={{ fontSize: 11, color: COLOURS.dim }}>{sd.weeksLeft} wk{sd.weeksLeft !== 1 ? "s" : ""} left</span>
                   )}
                 </div>
+                {sd.sprint.dateStart && (
+                  <div style={{ padding: "0 16px 10px", fontSize: 12, color: COLOURS.muted }}>
+                    <div>{fmtDateShort(sd.sprint.dateStart)} – {fmtDateShort(sd.sprint.dateEnd)}</div>
+                    {sd.weighInDates.length > 0 && (
+                      <div style={{ marginTop: 6, fontSize: 11, color: COLOURS.faint }}>
+                        <div style={{ fontWeight: 600, marginBottom: 3, color: COLOURS.muted }}>Weigh-in windows:</div>
+                        {sd.weighInDates.map((wi) => (
+                          <div key={wi.week}>Wk {wi.week}: {fmtDateShort(wi.wiStart)} {wi.timeStart} – {fmtDateShort(wi.wiEnd)} {wi.timeEnd}</div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )}
                 {sd.results.map((r, i) => (
                   <div key={r.playerId} style={lbRowStyle(me && r.playerId === me.id, i)}>
                     <div style={lbRankStyle(i)}>{i + 1}</div>
