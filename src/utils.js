@@ -28,16 +28,16 @@ export const fmtWeight = (kg, unit, decimals = 1) => {
   return `${val.toFixed(decimals)}${unit}`;
 };
 
-/** Validate a weight entry – returns error string or null */
+/** Validate a weight entry - returns error string or null */
 export const validateWeight = (weight, unit) => {
   const w = parseFloat(weight);
   if (isNaN(w) || w <= 0) return "That's not a real weight. Try again.";
   if (unit === "kg" && (w < 30 || w > 300))
-    return "Between 30–300kg please. You're not a small child or an elephant.";
+    return "Between 30-300kg please. You're not a small child or an elephant.";
   if (unit === "lbs" && (w < 66 || w > 660))
-    return "Between 66–660lbs please. Be serious.";
+    return "Between 66-660lbs please. Be serious.";
   if (unit === "st" && (w < 4 || w > 47))
-    return "Between 4–47 stone please. Come on.";
+    return "Between 4-47 stone please. Come on.";
   return null;
 };
 
@@ -45,17 +45,17 @@ export const validateWeight = (weight, unit) => {
 
 /** Format a date or timestamp to "8 Mar" style */
 export const fmtDate = (d) => {
-  if (!d) return "–";
+  if (!d) return "-";
   const date = d instanceof Date ? d : fromTimestamp(d);
-  if (!date) return "–";
+  if (!date) return "-";
   return date.toLocaleDateString("en-GB", { day: "numeric", month: "short" });
 };
 
 /** Format full date "8 Mar 2025" */
 export const fmtDateFull = (d) => {
-  if (!d) return "–";
+  if (!d) return "-";
   const date = d instanceof Date ? d : fromTimestamp(d);
-  if (!date) return "–";
+  if (!date) return "-";
   return date.toLocaleDateString("en-GB", {
     day: "numeric",
     month: "short",
@@ -107,7 +107,7 @@ export const getISOWeek = (d) => {
   );
 };
 
-/** Check if a date falls within the Sat 06:00 – Sun 23:59 weigh-in window */
+/** Check if a date falls within the Sat 06:00 - Sun 23:59 weigh-in window */
 export const isInWeighInWindow = (date) => {
   const d = date instanceof Date ? date : fromTimestamp(date);
   if (!d) return false;
@@ -118,7 +118,7 @@ export const isInWeighInWindow = (date) => {
   return false;
 };
 
-/** Get the "weigh-in week" identifier for a given date (Sat–Sun window)
+/** Get the "weigh-in week" identifier for a given date (Sat-Sun window)
  *  Returns a string like "2025-W12" for grouping weekend weigh-ins */
 export const getWeighInWeek = (date, startDate) => {
   const d = date instanceof Date ? date : fromTimestamp(date);
@@ -203,7 +203,124 @@ export const getSprintForWeek = (week, sprints = DEFAULT_SPRINTS) => {
   return sprints.find((s) => week >= s.startWeek && week <= s.endWeek) || null;
 };
 
-ght : p.startWeight;
+/** Get the current sprint based on the current date and competition start */
+export const getCurrentSprint = (startDate, sprints = DEFAULT_SPRINTS) => {
+  const now = new Date();
+  const week = getCompWeek(now, startDate);
+  return getSprintForWeek(week, sprints);
+};
+
+/** Calculate sprint results for a given sprint.
+ *  Uses shared weigh-ins only.
+ *  Sprint start weight = first weigh-in in the sprint block.
+ *  Sprint end weight = last weigh-in in the sprint block.
+ *  Eligibility: at least 2 weigh-ins during the sprint. */
+export const calcSprintResults = (
+  sprint,
+  players,
+  weighins,
+  startDate
+) => {
+  const results = [];
+
+  for (const player of players) {
+    const playerWeighins = weighins
+      .filter((w) => w.playerId === player.id && w.shared)
+      .map((w) => ({
+        ...w,
+        dateObj: fromTimestamp(w.date),
+      }))
+      .filter((w) => {
+        const week = getCompWeek(w.dateObj, startDate);
+        return week >= sprint.startWeek && week <= sprint.endWeek;
+      })
+      .sort((a, b) => a.dateObj - b.dateObj);
+
+    if (playerWeighins.length < 2) {
+      results.push({
+        playerId: player.id,
+        nickname: player.nickname || player.name,
+        pctChange: 0,
+        eligible: false,
+        weighInCount: playerWeighins.length,
+        startWeight: playerWeighins[0]?.weight || null,
+        endWeight: playerWeighins[playerWeighins.length - 1]?.weight || null,
+      });
+      continue;
+    }
+
+    const sprintStart = playerWeighins[0].weight;
+    const sprintEnd = playerWeighins[playerWeighins.length - 1].weight;
+    const pctChange = calcPctLoss(sprintStart, sprintEnd);
+
+    results.push({
+      playerId: player.id,
+      nickname: player.nickname || player.name,
+      pctChange,
+      eligible: true,
+      weighInCount: playerWeighins.length,
+      startWeight: sprintStart,
+      endWeight: sprintEnd,
+    });
+  }
+
+  // Sort eligible players by pct loss (highest first)
+  results.sort((a, b) => {
+    if (a.eligible && !b.eligible) return -1;
+    if (!a.eligible && b.eligible) return 1;
+    return b.pctChange - a.pctChange;
+  });
+
+  return results;
+};
+
+// ---- STREAK CALCULATION ----
+
+/** Calculate weigh-in streak (consecutive weeks with at least one entry).
+ *  Walks backwards from the current week. */
+export const calcStreak = (weighinDates, startDate) => {
+  if (!weighinDates || weighinDates.length === 0 || !startDate) return 0;
+
+  const weekSet = new Set();
+  weighinDates.forEach((d) => {
+    const date = d instanceof Date ? d : fromTimestamp(d);
+    if (date) {
+      const wk = getCompWeek(date, startDate);
+      weekSet.add(wk);
+    }
+  });
+
+  const now = new Date();
+  const currentWeek = getCompWeek(now, startDate);
+  let streak = 0;
+
+  for (let wk = currentWeek; wk >= 1; wk--) {
+    if (weekSet.has(wk)) {
+      streak++;
+    } else if (wk < currentWeek) {
+      break;
+    }
+  }
+  return streak;
+};
+
+// ---- LEADERBOARD ----
+
+/** Build the full leaderboard from players and weighins */
+export const buildLeaderboard = (players, weighins, startDate) => {
+  return players
+    .map((p) => {
+      const playerWeighins = weighins
+        .filter((w) => w.playerId === p.id)
+        .sort((a, b) => {
+          const da = fromTimestamp(a.date);
+          const db = fromTimestamp(b.date);
+          return da - db;
+        });
+
+      const sharedWeighins = playerWeighins.filter((w) => w.shared);
+      const latest = sharedWeighins[sharedWeighins.length - 1];
+      const currentWeight = latest ? latest.weight : p.startWeight;
       const pctLoss = calcPctLoss(p.startWeight, currentWeight);
       const totalSharedWeighins = sharedWeighins.length;
 
@@ -382,7 +499,7 @@ export const calcConsolationPrizes = (players, weighins, totalWeeks, startDate) 
   }
 
   // Most Improved (biggest rank improvement from lowest-ever position)
-  // This requires historical rank tracking – simplified: compare earliest rank to final
+  // This requires historical rank tracking - simplified: compare earliest rank to final
   const leaderboard = buildLeaderboard(players, weighins, startDate);
   // For simplicity, track "most improved" as biggest jump in the final ranking
   // vs the mid-competition low point (approximated)
