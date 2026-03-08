@@ -6,18 +6,18 @@
 // ============================================================
 
 export const COLOURS = {
-  bg: "#0a0a0a",
-  bgDark: "#1a1a2e",
+  bg: "#111118",
+  bgDark: "#1e1e38",
   primary: "#ff6b35",
   primaryDark: "#e85d26",
   gold: "#f7c948",
   green: "#4ade80",
   red: "#f87171",
-  text: "#e0e0e0",
-  muted: "#888",
-  dim: "#666",
-  faint: "#555",
-  subtle: "#444",
+  text: "#f0f0f0",
+  muted: "#aaa",
+  dim: "#888",
+  faint: "#777",
+  subtle: "#555",
   whatsapp: "#25D366",
 };
 
