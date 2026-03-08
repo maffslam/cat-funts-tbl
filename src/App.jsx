@@ -283,7 +283,7 @@ export default function App() {
       nickname: formNickname.trim() || formName.trim(),
       startWeight: weightKg,
       preferredUnit: formUnit,
-      paid: false,
+      paid: true,
       authUid: authUser.uid,
       weeklyStreak: 0,
     });
@@ -332,7 +332,7 @@ export default function App() {
       nickname: formNickname.trim() || formName.trim(),
       startWeight: weightKg,
       preferredUnit: formUnit,
-      paid: false,
+      paid: true,
       authUid: authUser.uid,
       weeklyStreak: 0,
     });
