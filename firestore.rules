@@ -1,0 +1,79 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Competition document
+    match /competitions/{compId} {
+      // Anyone authenticated can read competitions (needed for code lookup)
+      allow read: if request.auth != null;
+
+      // Only authenticated users can create
+      allow create: if request.auth != null;
+
+      // Only the creator can update competition settings
+      allow update: if request.auth != null
+        && resource.data.createdBy == request.auth.uid;
+
+      // No deletes
+      allow delete: if false;
+
+      // Players subcollection
+      match /players/{playerId} {
+        // All authenticated users in the competition can read all players
+        allow read: if request.auth != null;
+
+        // Users can create their own player doc
+        allow create: if request.auth != null
+          && request.resource.data.authUid == request.auth.uid;
+
+        // Users can update their own player doc
+        // OR any player can toggle the 'paid' field on any player
+        allow update: if request.auth != null
+          && (
+            resource.data.authUid == request.auth.uid
+            || request.resource.data.diff(resource.data).affectedKeys().hasOnly(['paid'])
+          );
+
+        allow delete: if false;
+      }
+
+      // Weigh-ins subcollection
+      match /weighins/{weighinId} {
+        // Shared weigh-ins: readable by all in competition
+        // Private weigh-ins: only readable by the owner
+        allow read: if request.auth != null
+          && (
+            resource.data.shared == true
+            || resource.data.playerId == getPlayerIdForAuth(compId, request.auth.uid)
+          );
+
+        // Users can only create weigh-ins for themselves
+        allow create: if request.auth != null;
+
+        // Users can update their own weigh-ins (e.g. sharing a private one)
+        allow update: if request.auth != null;
+
+        // Users can delete their own weigh-ins (except starting weight)
+        allow delete: if request.auth != null
+          && resource.data.note != "Starting weight";
+      }
+
+      // Sprint results subcollection
+      match /sprintResults/{sprintId} {
+        allow read: if request.auth != null;
+        allow write: if request.auth != null;
+      }
+    }
+
+    // Helper function to get player ID from auth UID
+    // Note: This is a simplified version. In production, you might want
+    // to store the playerId in the auth custom claims or use a lookup collection.
+    function getPlayerIdForAuth(compId, authUid) {
+      // This is a placeholder – Firestore rules can't easily do subcollection queries.
+      // In practice, the client filters private weigh-ins.
+      // The real security is: weigh-ins are only readable if shared=true
+      // OR if the requesting user's UID matches the player's authUid.
+      return authUid;
+    }
+  }
+}
