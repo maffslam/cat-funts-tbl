@@ -10,8 +10,8 @@ import {
 
 import {
   db, auth, onAuthChange, signInWithGoogle, signInWithPhone,
-  logOut, getCompetitionByCode, createCompetition, createPlayer,
-  getPlayerByAuthUid, addWeighin, updateWeighin, deleteWeighin,
+  logOut, getCompetitionByCode, createCompetition, updateCompetition,
+  createPlayer, getPlayerByAuthUid, addWeighin, updateWeighin, deleteWeighin,
   updatePlayer, listenToPlayers, listenToWeighins, listenToCompetition,
   setSprintResult, getSprintResults, fromTimestamp, toTimestamp,
 } from "./firebase.js";
@@ -24,6 +24,7 @@ import {
   getCurrentSprint, calcSprintResults, calcStreak,
   buildLeaderboard, getWallOfShame, calcWeeklyKudos,
   generateRoundUp, calcConsolationPrizes,
+  calculateSprintsFromDates, getNextMonday, toISODate,
 } from "./utils.js";
 
 import {
@@ -74,12 +75,25 @@ export default function App() {
   const [formWeight, setFormWeight] = useState("");
   const [formUnit, setFormUnit] = useState("kg");
   const [formCode, setFormCode] = useState("");
-  const [formWeeks, setFormWeeks] = useState("11");
+  const [formStartDate, setFormStartDate] = useState(() => toISODate(getNextMonday()));
+  const [formEndDate, setFormEndDate] = useState(() => {
+    const d = getNextMonday(); d.setDate(d.getDate() + 11 * 7); return toISODate(d);
+  });
   const [formBuyIn, setFormBuyIn] = useState("20");
   const [formNewWeight, setFormNewWeight] = useState("");
   const [formNewUnit, setFormNewUnit] = useState("kg");
   const [formNote, setFormNote] = useState("");
   const [confirmDelete, setConfirmDelete] = useState(null);
+
+  // ---- ADMIN FORM STATE ----
+  const [adminStartDate, setAdminStartDate] = useState("");
+  const [adminEndDate, setAdminEndDate] = useState("");
+  const [adminBuyIn, setAdminBuyIn] = useState("");
+  const [adminCurrency, setAdminCurrency] = useState("£");
+  const [adminDayStart, setAdminDayStart] = useState("Saturday");
+  const [adminTimeStart, setAdminTimeStart] = useState("06:00");
+  const [adminDayEnd, setAdminDayEnd] = useState("Sunday");
+  const [adminTimeEnd, setAdminTimeEnd] = useState("23:59");
 
   // ---- TOAST HELPER ----
   const showToast = (msg) => {
@@ -238,18 +252,19 @@ export default function App() {
     const existing = await getCompetitionByCode(code);
     if (existing) return setError("That code's taken. Pick another.");
 
-    const weeks = parseInt(formWeeks) || 11;
     const buyIn = parseFloat(formBuyIn) || 0;
-    const now = new Date();
-    const endDate = new Date(now.getTime() + weeks * 7 * 24 * 60 * 60 * 1000);
+    const startDt = new Date(formStartDate + "T00:00:00");
+    const endDt = new Date(formEndDate + "T23:59:59");
+    if (isNaN(startDt.getTime()) || isNaN(endDt.getTime())) return setError("Invalid dates.");
+    if (endDt <= startDt) return setError("End date must be after start date.");
 
     const compData = {
       code,
-      startDate: toTimestamp(now),
-      endDate: toTimestamp(endDate),
+      startDate: toTimestamp(startDt),
+      endDate: toTimestamp(endDt),
       buyIn,
       currency: "£",
-      sprints: DEFAULT_SPRINTS,
+      sprints: calculateSprintsFromDates(startDt, endDt),
       overallPrizePercent: OVERALL_PRIZE_PERCENT,
       weighInWindow: {
         dayStart: "Saturday", timeStart: "06:00",
@@ -278,8 +293,8 @@ export default function App() {
       weight: weightKg,
       shared: true,
       note: "Starting weight",
-      weekNumber: 1,
-      inWindow: isInWeighInWindow(now),
+      weekNumber: getCompWeek(new Date(), startDt),
+      inWindow: isInWeighInWindow(new Date()),
     });
 
     setCompId(newCompId);
@@ -427,6 +442,50 @@ export default function App() {
     setView("banter");
   };
 
+  // ---- ADMIN: POPULATE FORM ----
+  useEffect(() => {
+    if (view === "admin" && competition) {
+      const sd = fromTimestamp(competition.startDate);
+      const ed = fromTimestamp(competition.endDate);
+      if (sd) setAdminStartDate(toISODate(sd));
+      if (ed) setAdminEndDate(toISODate(ed));
+      setAdminBuyIn(String(competition.buyIn ?? ""));
+      setAdminCurrency(competition.currency || "£");
+      const w = competition.weighInWindow || {};
+      setAdminDayStart(w.dayStart || "Saturday");
+      setAdminTimeStart(w.timeStart || "06:00");
+      setAdminDayEnd(w.dayEnd || "Sunday");
+      setAdminTimeEnd(w.timeEnd || "23:59");
+    }
+  }, [view, competition]);
+
+  // ---- ADMIN: SAVE SETTINGS ----
+  const handleAdminUpdate = async () => {
+    if (!compId || !isAdmin) return;
+    const sd = new Date(adminStartDate + "T00:00:00");
+    const ed = new Date(adminEndDate + "T23:59:59");
+    if (isNaN(sd.getTime()) || isNaN(ed.getTime())) return setError("Invalid dates.");
+    if (ed <= sd) return setError("End date must be after start date.");
+
+    const newSprints = calculateSprintsFromDates(sd, ed);
+    await updateCompetition(compId, {
+      startDate: toTimestamp(sd),
+      endDate: toTimestamp(ed),
+      buyIn: parseFloat(adminBuyIn) || 0,
+      currency: adminCurrency || "£",
+      sprints: newSprints,
+      weighInWindow: {
+        dayStart: adminDayStart,
+        timeStart: adminTimeStart,
+        dayEnd: adminDayEnd,
+        timeEnd: adminTimeEnd,
+      },
+    });
+    showToast("Settings saved.");
+    setError("");
+    setView("dashboard");
+  };
+
   // ---- SHARE A PRIVATE WEIGH-IN ----
   const shareWeighIn = async (weighinId) => {
     if (!compId) return;
@@ -444,7 +503,7 @@ export default function App() {
     if (!compId) return;
     await deleteWeighin(compId, weighinId);
     setConfirmDelete(null);
-    showToast("Weigh-in deleted. Like it never happened. 👑️");
+    showToast("Weigh-in deleted. Like it never happened. 🗑️");
   };
 
   // ---- TOGGLE PAID ----
@@ -663,8 +722,11 @@ export default function App() {
           <div style={S.card}>
             <div style={S.cardTitle}>Competition Setup</div>
             <input style={S.input} placeholder="Invite code (e.g. FATCLUB)" value={formCode} onChange={(e) => setFormCode(e.target.value)} maxLength={12} />
-            <input style={S.input} placeholder="Duration (weeks)" type="number" value={formWeeks} onChange={(e) => setFormWeeks(e.target.value)} />
-            <input style={S.input} placeholder="Buy-in (£ per person)" type="number" value={formBuyIn} onChange={(e) => setFormBuyIn(e.target.value)} />
+            <div style={{ fontSize: 12, color: COLOURS.faint, marginTop: 8, marginBottom: 4 }}>Start date</div>
+            <input style={S.input} type="date" value={formStartDate} onChange={(e) => setFormStartDate(e.target.value)} />
+            <div style={{ fontSize: 12, color: COLOURS.faint, marginTop: 8, marginBottom: 4 }}>End date</div>
+            <input style={S.input} type="date" value={formEndDate} onChange={(e) => setFormEndDate(e.target.value)} />
+            <input style={{ ...S.input, marginTop: 12 }} placeholder="Buy-in (£ per person)" type="number" value={formBuyIn} onChange={(e) => setFormBuyIn(e.target.value)} />
           </div>
           <button style={S.btnPrimary} onClick={handleCreate}>Let's F***ing Go</button>
           <button style={S.btnGhost} onClick={() => { setView("home"); setError(""); }}>← Back</button>
@@ -749,9 +811,9 @@ export default function App() {
 
         {/* Navigation */}
         <div style={S.nav}>
-          {["dashboard", "weighin", "stats", "sprints", "charts", "pot"].map((v) => (
+          {(isAdmin ? ["dashboard", "weighin", "stats", "sprints", "charts", "pot", "admin"] : ["dashboard", "weighin", "stats", "sprints", "charts", "pot"]).map((v) => (
             <button key={v} style={navBtnStyle(view === v)} onClick={() => setView(v)}>
-              {v === "dashboard" ? "Board" : v === "weighin" ? "Weigh In" : v === "stats" ? "My Stats" : v === "sprints" ? "Sprints" : v === "charts" ? "Charts" : "Pot"}
+              {v === "dashboard" ? "Board" : v === "weighin" ? "Weigh In" : v === "stats" ? "My Stats" : v === "sprints" ? "Sprints" : v === "charts" ? "Charts" : v === "pot" ? "Pot" : "➙"}
             </button>
           ))}
         </div>
@@ -1183,9 +1245,59 @@ export default function App() {
           </>
         )}
 
+        {/* ============ ADMIN SETTINGS ============ */}
+        {view === "admin" && isAdmin && (
+          <>
+            {error && <div style={S.errorMsg}>{error}</div>}
+            <div style={S.card}>
+              <div style={S.cardTitle}>Competition Dates</div>
+              <div style={{ fontSize: 12, color: COLOURS.faint, marginBottom: 4 }}>Start date</div>
+              <input style={S.input} type="date" value={adminStartDate} onChange={(e) => setAdminStartDate(e.target.value)} />
+              <div style={{ fontSize: 12, color: COLOURS.faint, marginTop: 8, marginBottom: 4 }}>End date</div>
+              <input style={S.input} type="date" value={adminEndDate} onChange={(e) => setAdminEndDate(e.target.value)} />
+              {adminStartDate && adminEndDate && (
+                <div style={{ fontSize: 11, color: COLOURS.dim, marginTop: 8, textAlign: "center" }}>
+                  {Math.ceil((new Date(adminEndDate) - new Date(adminStartDate)) / (7 * 24 * 60 * 60 * 1000))} weeks
+                  {" · "}Sprints: {calculateSprintsFromDates(adminStartDate, adminEndDate).map((s) => `${s.startWeek}–${s.endWeek}`).join(", ")}
+                </div>
+              )}
+            </div>
+            <div style={S.card}>
+              <div style={S.cardTitle}>Money</div>
+              <div style={{ fontSize: 12, color: COLOURS.faint, marginBottom: 4 }}>Buy-in per person</div>
+              <input style={S.input} type="number" value={adminBuyIn} onChange={(e) => setAdminBuyIn(e.target.value)} />
+              <div style={{ fontSize: 12, color: COLOURS.faint, marginTop: 8, marginBottom: 4 }}>Currency symbol</div>
+              <input style={S.input} value={adminCurrency} onChange={(e) => setAdminCurrency(e.target.value)} maxLength={3} />
+            </div>
+            <div style={S.card}>
+              <div style={S.cardTitle}>Weigh-in Window</div>
+              <div style={{ fontSize: 12, color: COLOURS.faint, marginBottom: 4 }}>Opens</div>
+              <div style={{ display: "flex", gap: 8 }}>
+                <select style={{ ...S.input, flex: 1 }} value={adminDayStart} onChange={(e) => setAdminDayStart(e.target.value)}>
+                  {["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"].map((d) => (
+                    <option key={d} value={d}>{d}</option>
+                  ))}
+                </select>
+                <input style={{ ...S.input, flex: 1 }} type="time" value={adminTimeStart} onChange={(e) => setAdminTimeStart(e.target.value)} />
+              </div>
+              <div style={{ fontSize: 12, color: COLOURS.faint, marginTop: 8, marginBottom: 4 }}>Closes</div>
+              <div style={{ display: "flex", gap: 8 }}>
+                <select style={{ ...S.input, flex: 1 }} value={adminDayEnd} onChange={(e) => setAdminDayEnd(e.target.value)}>
+                  {["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"].map((d) => (
+                    <option key={d} value={d}>{d}</option>
+                  ))}
+                </select>
+                <input style={{ ...S.input, flex: 1 }} type="time" value={adminTimeEnd} onChange={(e) => setAdminTimeEnd(e.target.value)} />
+              </div>
+            </div>
+            <button style={S.btnPrimary} onClick={handleAdminUpdate}>Save Settings</button>
+            <button style={S.btnGhost} onClick={() => { setError(""); setView("dashboard"); }}>Cancel</button>
+          </>
+        )}
+
         {/* Footer */}
         <div style={{ textAlign: "center", marginTop: 30, paddingBottom: 20 }}>
-          {isAdmin && <div style={{ fontSize: 10, color: COLOURS.subtle, marginBottom: 8 }}>You're the admin (competition creator)</div>}
+          {isAdmin && view !== "admin" && <div style={{ fontSize: 10, color: COLOURS.subtle, marginBottom: 8 }}>You're the admin (competition creator)</div>}
           <button style={S.btnGhost} onClick={() => { localStorage.removeItem("fc:compId"); setCompId(null); setView("home"); }}>
             Leave Competition
           </button>

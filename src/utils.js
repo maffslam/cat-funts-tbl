@@ -165,129 +165,45 @@ export const DEFAULT_SPRINTS = [
 
 export const OVERALL_PRIZE_PERCENT = 55;
 
+/** Auto-calculate 3 sprints from a start and end date */
+export const calculateSprintsFromDates = (startDate, endDate) => {
+  const s = startDate instanceof Date ? startDate : new Date(startDate);
+  const e = endDate instanceof Date ? endDate : new Date(endDate);
+  const totalDays = Math.floor((e - s) / (1000 * 60 * 60 * 24));
+  const totalWeeks = Math.max(3, Math.ceil(totalDays / 7));
+  const base = Math.floor(totalWeeks / 3);
+  const remainder = totalWeeks % 3;
+  const s1 = base + (remainder >= 1 ? 1 : 0);
+  const s2 = base + (remainder >= 2 ? 1 : 0);
+  const s3 = totalWeeks - s1 - s2;
+  return [
+    { number: 1, startWeek: 1, endWeek: s1, prizePercent: 15 },
+    { number: 2, startWeek: s1 + 1, endWeek: s1 + s2, prizePercent: 15 },
+    { number: 3, startWeek: s1 + s2 + 1, endWeek: totalWeeks, prizePercent: 15 },
+  ];
+};
+
+/** Get next Monday from a given date (or today if it is Monday) */
+export const getNextMonday = (from = new Date()) => {
+  const d = new Date(from);
+  const day = d.getDay();
+  const daysUntilMon = day === 0 ? 1 : day === 1 ? 0 : 8 - day;
+  d.setDate(d.getDate() + daysUntilMon);
+  return d;
+};
+
+/** Format a Date as YYYY-MM-DD for HTML date inputs */
+export const toISODate = (d) => {
+  const dt = d instanceof Date ? d : new Date(d);
+  return dt.toISOString().split("T")[0];
+};
+
 /** Get which sprint a given week falls in */
 export const getSprintForWeek = (week, sprints = DEFAULT_SPRINTS) => {
   return sprints.find((s) => week >= s.startWeek && week <= s.endWeek) || null;
 };
 
-/** Get the current sprint based on the current date and competition start */
-export const getCurrentSprint = (startDate, sprints = DEFAULT_SPRINTS) => {
-  const now = new Date();
-  const week = getCompWeek(now, startDate);
-  return getSprintForWeek(week, sprints);
-};
-
-/** Calculate sprint results for a given sprint.
- *  Uses shared weigh-ins only.
- *  Sprint start weight = first weigh-in in the sprint block.
- *  Sprint end weight = last weigh-in in the sprint block.
- *  Eligibility: at least 2 weigh-ins during the sprint. */
-export const calcSprintResults = (
-  sprint,
-  players,
-  weighins,
-  startDate
-) => {
-  const results = [];
-
-  for (const player of players) {
-    const playerWeighins = weighins
-      .filter((w) => w.playerId === player.id && w.shared)
-      .map((w) => ({
-        ...w,
-        dateObj: fromTimestamp(w.date),
-      }))
-      .filter((w) => {
-        const week = getCompWeek(w.dateObj, startDate);
-        return week >= sprint.startWeek && week <= sprint.endWeek;
-      })
-      .sort((a, b) => a.dateObj - b.dateObj);
-
-    if (playerWeighins.length < 2) {
-      results.push({
-        playerId: player.id,
-        nickname: player.nickname || player.name,
-        pctChange: 0,
-        eligible: false,
-        weighInCount: playerWeighins.length,
-        startWeight: playerWeighins[0]?.weight || null,
-        endWeight: playerWeighins[playerWeighins.length - 1]?.weight || null,
-      });
-      continue;
-    }
-
-    const sprintStart = playerWeighins[0].weight;
-    const sprintEnd = playerWeighins[playerWeighins.length - 1].weight;
-    const pctChange = calcPctLoss(sprintStart, sprintEnd);
-
-    results.push({
-      playerId: player.id,
-      nickname: player.nickname || player.name,
-      pctChange,
-      eligible: true,
-      weighInCount: playerWeighins.length,
-      startWeight: sprintStart,
-      endWeight: sprintEnd,
-    });
-  }
-
-  // Sort eligible players by pct loss (highest first)
-  results.sort((a, b) => {
-    if (a.eligible && !b.eligible) return -1;
-    if (!a.eligible && b.eligible) return 1;
-    return b.pctChange - a.pctChange;
-  });
-
-  return results;
-};
-
-// ---- STREAK CALCULATION ----
-
-/** Calculate weigh-in streak (consecutive weeks with at least one entry).
- *  Walks backwards from the current week. */
-export const calcStreak = (weighinDates, startDate) => {
-  if (!weighinDates || weighinDates.length === 0 || !startDate) return 0;
-
-  const weekSet = new Set();
-  weighinDates.forEach((d) => {
-    const date = d instanceof Date ? d : fromTimestamp(d);
-    if (date) {
-      const wk = getCompWeek(date, startDate);
-      weekSet.add(wk);
-    }
-  });
-
-  const now = new Date();
-  const currentWeek = getCompWeek(now, startDate);
-  let streak = 0;
-
-  for (let wk = currentWeek; wk >= 1; wk--) {
-    if (weekSet.has(wk)) {
-      streak++;
-    } else if (wk < currentWeek) {
-      break;
-    }
-  }
-  return streak;
-};
-
-// ---- LEADERBOARD ----
-
-/** Build the full leaderboard from players and weighins */
-export const buildLeaderboard = (players, weighins, startDate) => {
-  return players
-    .map((p) => {
-      const playerWeighins = weighins
-        .filter((w) => w.playerId === p.id)
-        .sort((a, b) => {
-          const da = fromTimestamp(a.date);
-          const db = fromTimestamp(b.date);
-          return da - db;
-        });
-
-      const sharedWeighins = playerWeighins.filter((w) => w.shared);
-      const latest = sharedWeighins[sharedWeighins.length - 1];
-      const currentWeight = latest ? latest.weight : p.startWeight;
+ght : p.startWeight;
       const pctLoss = calcPctLoss(p.startWeight, currentWeight);
       const totalSharedWeighins = sharedWeighins.length;
 
