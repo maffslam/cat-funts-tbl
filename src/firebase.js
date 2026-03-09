@@ -76,6 +76,16 @@ export const onAuthChange = (callback) => onAuthStateChanged(auth, callback);
 
 // ---- FIRESTORE HELPERS ----
 
+// Users (top-level collection mapping auth UID → competition)
+export const getUserCompetition = async (uid) => {
+  const snap = await getDoc(doc(db, "users", uid));
+  return snap.exists() ? snap.data().competitionId : null;
+};
+
+export const setUserCompetition = async (uid, competitionId) => {
+  await setDoc(doc(db, "users", uid), { competitionId, updatedAt: serverTimestamp() }, { merge: true });
+};
+
 // Competition
 export const getCompetition = async (compId) => {
   const snap = await getDoc(doc(db, "competitions", compId));
