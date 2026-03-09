@@ -6,18 +6,18 @@
 // ============================================================
 
 export const COLOURS = {
-  bg: "#111118",
-  bgDark: "#1e1e38",
+  bg: "#0a0a0a",
+  bgDark: "#1a1a2e",
   primary: "#ff6b35",
   primaryDark: "#e85d26",
   gold: "#f7c948",
   green: "#4ade80",
   red: "#f87171",
-  text: "#f0f0f0",
-  muted: "#aaa",
-  dim: "#888",
-  faint: "#777",
-  subtle: "#555",
+  text: "#e0e0e0",
+  muted: "#888",
+  dim: "#666",
+  faint: "#555",
+  subtle: "#444",
   whatsapp: "#25D366",
 };
 
@@ -241,6 +241,20 @@ export const S = {
     fontSize: 14,
     lineHeight: 1.5,
     textAlign: "center",
+  },
+  ghostBadge: {
+    display: "inline-block",
+    fontSize: 9,
+    color: COLOURS.faint,
+    marginLeft: 8,
+    padding: "2px 6px",
+    borderRadius: 3,
+    border: `1px solid ${COLOURS.faint}`,
+    textTransform: "uppercase",
+    letterSpacing: 1,
+    fontWeight: 400,
+    fontStyle: "normal",
+    verticalAlign: "middle",
   },
   unitToggle: {
     display: "flex",
