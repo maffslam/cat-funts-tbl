@@ -3,12 +3,12 @@
 // ============================================================
 
 import { useState, useEffect, useCallback, useMemo } from "react";
-import 
+import  {
   LineChart, Line, XAxis, YAxis, Tooltip,
   ResponsiveContainer, Legend,
 } from "recharts";
 
-import 
+import  {
   db, auth, onAuthChange, signInWithGoogle, signInWithPhone,
   logOut, getCompetitionByCode, createCompetition, updateCompetition,
   createPlayer, getPlayerByAuthUid, addWeighin, updateWeighin, deleteWeighin,
