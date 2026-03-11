@@ -1,5 +1,5 @@
 // ============================================================
-// CAT FUNTS TBL v3 \u2013 Main App Component
+// CAT FUNTS TBL v3 – Main App Component
 // ============================================================
 
 import { useState, useEffect, useCallback, useMemo } from "react";
@@ -91,7 +91,7 @@ export default function App() {
   const [adminStartDate, setAdminStartDate] = useState("");
   const [adminEndDate, setAdminEndDate] = useState("");
   const [adminBuyIn, setAdminBuyIn] = useState("");
-  const [adminCurrency, setAdminCurrency] = useState("\u00A3");
+  const [adminCurrency, setAdminCurrency] = useState("£");
   const [adminDayStart, setAdminDayStart] = useState("Saturday");
   const [adminTimeStart, setAdminTimeStart] = useState("06:00");
   const [adminDayEnd, setAdminDayEnd] = useState("Sunday");
@@ -271,7 +271,7 @@ export default function App() {
       startDate: toTimestamp(startDt),
       endDate: toTimestamp(endDt),
       buyIn,
-      currency: "\u00A3",
+      currency: "£",
       sprints: calculateSprintsFromDates(startDt, endDt),
       overallPrizePercent: OVERALL_PRIZE_PERCENT,
       weighInWindow: {
@@ -463,7 +463,7 @@ export default function App() {
       if (sd) setAdminStartDate(toISODate(sd));
       if (ed) setAdminEndDate(toISODate(ed));
       setAdminBuyIn(String(competition.buyIn ?? ""));
-      setAdminCurrency(competition.currency || "\u00A3");
+      setAdminCurrency(competition.currency || "£");
       const w = competition.weighInWindow || {};
       setAdminDayStart(w.dayStart || "Saturday");
       setAdminTimeStart(w.timeStart || "06:00");
@@ -485,7 +485,7 @@ export default function App() {
       startDate: toTimestamp(sd),
       endDate: toTimestamp(ed),
       buyIn: parseFloat(adminBuyIn) || 0,
-      currency: adminCurrency || "\u00A3",
+      currency: adminCurrency || "£",
       sprints: newSprints,
       weighInWindow: {
         dayStart: adminDayStart,
@@ -539,16 +539,16 @@ export default function App() {
 
   const genLeaderboardMsg = () => {
     if (leaderboard.length === 0) return "";
-    let msg = `ð FAT CUNTS \u2013 WEEK ${currentWeek} ð\n\n`;
+    let msg = `ð FAT CUNTS – WEEK ${currentWeek} ð\n\n`;
     leaderboard.forEach((p, i) => {
       const medal = i === 0 ? "ð¥" : i === 1 ? "ð¥" : i === 2 ? "ð¥" : `${i + 1}.`;
-      const dir = (p.pctLoss || 0) > 0 ? "â" : p.pctLoss < 0 ? "â" : "\u2013";
+      const dir = (p.pctLoss || 0) > 0 ? "â" : p.pctLoss < 0 ? "â" : "–";
       msg += `${medal} ${p.nickname}: ${(p.pctLoss || 0) !== 0 ? `${Math.abs(p.pctLoss || 0).toFixed(1)}% ${dir}` : "no change"}\n`;
     });
     if (currentSprint) {
-      msg += `\nSprint ${currentSprint.number}: Week ${currentSprint.startWeek}\u2013${currentSprint.endWeek}`;
+      msg += `\nSprint ${currentSprint.number}: Week ${currentSprint.startWeek}–${currentSprint.endWeek}`;
     }
-    msg += `\n${daysLeft} days left. ${competition?.currency || "\u00A3"}${totalPot} in the pot. ð°`;
+    msg += `\n${daysLeft} days left. ${competition?.currency || "£"}${totalPot} in the pot. ð°`;
     return msg;
   };
 
@@ -556,7 +556,7 @@ export default function App() {
     if (!results || results.length === 0) return "";
     const winner = results.find((r) => r.eligible);
     if (!winner) return "";
-    return `ð¨ FAT CUNTS \u2013 SPRINT ${sprint.number} RESULT ð¨\n\nð ${winner.nickname} takes it! ${(winner.pctChange || 0).toFixed(1)}% lost.\nPockets \u00A3${Math.round(totalPot * sprint.prizePercent / 100)}.\n\nSprint ${sprint.number + 1} starts now. All to play for.`;
+    return `ð¨ FAT CUNTS – SPRINT ${sprint.number} RESULT ð¨\n\nð ${winner.nickname} takes it! ${(winner.pctChange || 0).toFixed(1)}% lost.\nPockets £${Math.round(totalPot * sprint.prizePercent / 100)}.\n\nSprint ${sprint.number + 1} starts now. All to play for.`;
   };
 
   // ---- MY CHART DATA ----
@@ -739,7 +739,7 @@ export default function App() {
             <input style={S.input} type="date" value={formStartDate} onChange={(e) => setFormStartDate(e.target.value)} />
             <div style={{ fontSize: 12, color: COLOURS.faint, marginTop: 8, marginBottom: 4 }}>End date</div>
             <input style={S.input} type="date" value={formEndDate} onChange={(e) => setFormEndDate(e.target.value)} />
-            <input style={{ ...S.input, marginTop: 12 }} placeholder="Buy-in (\u00A3 per person)" type="number" value={formBuyIn} onChange={(e) => setFormBuyIn(e.target.value)} />
+            <input style={{ ...S.input, marginTop: 12 }} placeholder="Buy-in (£ per person)" type="number" value={formBuyIn} onChange={(e) => setFormBuyIn(e.target.value)} />
           </div>
           <button style={S.btnPrimary} onClick={handleCreate}>Let's F***ing Go</button>
           <button style={S.btnGhost} onClick={() => { setView("home"); setError(""); }}>â Back</button>
@@ -815,7 +815,7 @@ export default function App() {
         {/* Header */}
         <div style={S.titleSmall}>Cat Funts TBL</div>
         <div style={S.subtitle}>
-          {competition?.code} \u2022 {daysLeft} days left
+          {competition?.code} • {daysLeft} days left
           {myData?.streak >= 2 && (
             <span style={{ color: COLOURS.gold, marginLeft: 8 }}>ð {myData.streak}wk</span>
           )}
@@ -860,7 +860,7 @@ export default function App() {
                 <div style={S.statLabel}>Days Left</div>
               </div>
               <div style={S.statBox}>
-                <div style={S.statVal}>{competition?.currency || "\u00A3"}{totalPot}</div>
+                <div style={S.statVal}>{competition?.currency || "£"}{totalPot}</div>
                 <div style={S.statLabel}>Prize Pot</div>
               </div>
             </div>
@@ -872,7 +872,7 @@ export default function App() {
                   ð Sprint {currentSprint.number}
                 </span>
                 <span style={{ fontSize: 11, color: COLOURS.dim }}>
-                  Weeks {currentSprint.startWeek}\u2013{currentSprint.endWeek} \u2022 {Math.max(0, currentSprint.endWeek - currentWeek + 1)} wks left
+                  Weeks {currentSprint.startWeek}–{currentSprint.endWeek} • {Math.max(0, currentSprint.endWeek - currentWeek + 1)} wks left
                 </span>
               </div>
             )}
@@ -887,7 +887,7 @@ export default function App() {
                   const rank = p.isGhost ? null : activeRank;
                   return (
                     <div key={p.id} style={{ ...lbRowStyle(me && p.id === me.id, rank ? rank - 1 : 99), ...(p.isGhost ? { opacity: 0.4 } : {}) }}>
-                      <div style={lbRankStyle(rank ? rank - 1 : 99)}>{rank || "\u2013"}</div>
+                      <div style={lbRankStyle(rank ? rank - 1 : 99)}>{rank || "–"}</div>
                       <div style={{ flex: 1 }}>
                         <div style={{ fontSize: 15, fontWeight: 600 }}>
                           {p.nickname || p.name}
@@ -904,11 +904,11 @@ export default function App() {
                         <div style={{ fontSize: 11, color: COLOURS.faint, marginTop: 2 }}>
                           {p.isGhost
                             ? "Set your starting weight to join the fight"
-                            : `${p.totalSharedWeighins} weigh-in${p.totalSharedWeighins !== 1 ? "s" : ""} \u2022 ${p.lastSharedDate ? fmtDate(p.lastSharedDate) : "no updates"}`}
+                            : `${p.totalSharedWeighins} weigh-in${p.totalSharedWeighins !== 1 ? "s" : ""} • ${p.lastSharedDate ? fmtDate(p.lastSharedDate) : "no updates"}`}
                         </div>
                       </div>
                       <div style={p.isGhost ? { color: COLOURS.faint, fontSize: 15, fontWeight: 700 } : pctStyle(p.pctLoss)}>
-                        {p.isGhost ? "\u2013" : ((p.pctLoss || 0) !== 0 ? `${Math.abs(p.pctLoss || 0).toFixed(1)}%` : "\u2013")}
+                        {p.isGhost ? "–" : ((p.pctLoss || 0) !== 0 ? `${Math.abs(p.pctLoss || 0).toFixed(1)}%` : "–")}
                       </div>
                     </div>
                   );
@@ -981,13 +981,13 @@ export default function App() {
               />
               <input
                 style={{ ...S.input, fontSize: 13 }}
-                placeholder="Note (optional \u2013 e.g. post-curry, pre-run)"
+                placeholder="Note (optional – e.g. post-curry, pre-run)"
                 value={formNote}
                 onChange={(e) => setFormNote(e.target.value)}
                 maxLength={60}
               />
               <div style={{ fontSize: 12, color: COLOURS.faint, textAlign: "center", marginTop: 8 }}>
-                Start: {myData ? fmtWeight(myData.startWeight, myUnit) : "\u2013"} \u2022 Last: {myData ? fmtWeight(myData.currentWeight, myUnit) : "\u2013"} \u2022 Change: {myData ? `${(myData.pctLoss || 0) >= 0 ? "+" : ""}${(myData.pctLoss || 0).toFixed(1)}%` : "\u2013"}
+                Start: {myData ? fmtWeight(myData.startWeight, myUnit) : "–"} • Last: {myData ? fmtWeight(myData.currentWeight, myUnit) : "–"} • Change: {myData ? `${(myData.pctLoss || 0) >= 0 ? "+" : ""}${(myData.pctLoss || 0).toFixed(1)}%` : "–"}
               </div>
               {isInWeighInWindow(new Date()) && (
                 <div style={{ fontSize: 11, color: COLOURS.green, textAlign: "center", marginTop: 6 }}>
@@ -996,7 +996,7 @@ export default function App() {
               )}
             </div>
             <button style={S.btnPrimary} onClick={() => handleWeighIn(true)}>
-              Share it \u2013 I've got nothing to hide
+              Share it – I've got nothing to hide
             </button>
             <button style={S.btnSecondary} onClick={() => handleWeighIn(false)}>
               Log Privately (coward mode)
@@ -1040,7 +1040,7 @@ export default function App() {
                         {sd.isComplete && <span style={{ color: COLOURS.green, marginLeft: 8, fontSize: 10 }}>DONE</span>}
                       </div>
                       <div style={{ fontSize: 11, color: COLOURS.faint, marginTop: 2 }}>
-                        Wks {sd.sprint.startWeek}\u2013{sd.sprint.endWeek} \u2022 {sd.sprint.prizePercent}% of pot
+                        Wks {sd.sprint.startWeek}–{sd.sprint.endWeek} • {sd.sprint.prizePercent}% of pot
                       </div>
                     </div>
                     <div style={{ textAlign: "right" }}>
@@ -1050,7 +1050,7 @@ export default function App() {
                         </span>
                       ) : (
                         <span style={{ fontSize: 12, color: COLOURS.dim }}>
-                          {myResult ? `${myResult.weighInCount}/2 weigh-ins` : "\u2013"}
+                          {myResult ? `${myResult.weighInCount}/2 weigh-ins` : "–"}
                         </span>
                       )}
                     </div>
@@ -1113,16 +1113,16 @@ export default function App() {
               <div style={S.cardTitle}>Prize Structure</div>
               {(competition?.sprints || DEFAULT_SPRINTS).map((s) => (
                 <div key={s.number} style={{ ...S.row, justifyContent: "space-between" }}>
-                  <span style={{ fontWeight: 600 }}>Sprint {s.number} (Wks {s.startWeek}\u2013{s.endWeek})</span>
+                  <span style={{ fontWeight: 600 }}>Sprint {s.number} (Wks {s.startWeek}–{s.endWeek})</span>
                   <span style={{ color: COLOURS.gold, fontWeight: 700 }}>
-                    {s.prizePercent}% \u2022 {competition?.currency || "\u00A3"}{Math.round(totalPot * s.prizePercent / 100)}
+                    {s.prizePercent}% • {competition?.currency || "£"}{Math.round(totalPot * s.prizePercent / 100)}
                   </span>
                 </div>
               ))}
               <div style={{ ...S.row, justifyContent: "space-between", borderBottom: "none" }}>
                 <span style={{ fontWeight: 600 }}>Overall Champion</span>
                 <span style={{ color: COLOURS.gold, fontWeight: 700 }}>
-                  {OVERALL_PRIZE_PERCENT}% \u2022 {competition?.currency || "\u00A3"}{Math.round(totalPot * OVERALL_PRIZE_PERCENT / 100)}
+                  {OVERALL_PRIZE_PERCENT}% • {competition?.currency || "£"}{Math.round(totalPot * OVERALL_PRIZE_PERCENT / 100)}
                 </span>
               </div>
             </div>
@@ -1153,7 +1153,7 @@ export default function App() {
                       </div>
                     </div>
                     <div style={pctStyle(r.pctChange)}>
-                      {r.eligible ? `${(r.pctChange || 0) > 0 ? "+" : ""}${(r.pctChange || 0).toFixed(1)}%` : "\u2013"}
+                      {r.eligible ? `${(r.pctChange || 0) > 0 ? "+" : ""}${(r.pctChange || 0).toFixed(1)}%` : "–"}
                     </div>
                   </div>
                 ))}
@@ -1210,11 +1210,11 @@ export default function App() {
                       {me && p.id === me.id && <span style={{ color: COLOURS.primary, fontSize: 10, marginLeft: 6 }}>YOU</span>}
                     </div>
                     <div style={{ fontSize: 11, color: COLOURS.faint, marginTop: 2 }}>
-                      {fmtWeight(p.startWeight, p.preferredUnit || "kg")} â {fmtWeight(p.currentWeight, p.preferredUnit || "kg")} \u2022 {p.totalSharedWeighins} weigh-in{p.totalSharedWeighins !== 1 ? "s" : ""}
+                      {fmtWeight(p.startWeight, p.preferredUnit || "kg")} â {fmtWeight(p.currentWeight, p.preferredUnit || "kg")} • {p.totalSharedWeighins} weigh-in{p.totalSharedWeighins !== 1 ? "s" : ""}
                     </div>
                   </div>
                   <div style={pctStyle(p.pctLoss)}>
-                    {(p.pctLoss || 0) !== 0 ? `${(p.pctLoss || 0) > 0 ? "+" : ""}${(p.pctLoss || 0).toFixed(1)}%` : "\u2013"}
+                    {(p.pctLoss || 0) !== 0 ? `${(p.pctLoss || 0) > 0 ? "+" : ""}${(p.pctLoss || 0).toFixed(1)}%` : "–"}
                   </div>
                 </div>
               ))}
@@ -1227,10 +1227,10 @@ export default function App() {
           <>
             <div style={S.card}>
               <div style={S.statBox}>
-                <div style={{ ...S.statVal, fontSize: 42 }}>{competition?.currency || "\u00A3"}{totalPot}</div>
+                <div style={{ ...S.statVal, fontSize: 42 }}>{competition?.currency || "£"}{totalPot}</div>
                 <div style={S.statLabel}>Total Pot</div>
                 <div style={{ color: COLOURS.faint, fontSize: 12, marginTop: 8 }}>
-                  {competition?.currency || "\u00A3"}{competition?.buyIn || 0} per person
+                  {competition?.currency || "£"}{competition?.buyIn || 0} per person
                 </div>
               </div>
             </div>
@@ -1242,14 +1242,14 @@ export default function App() {
                 <div key={s.number} style={{ ...S.row, justifyContent: "space-between" }}>
                   <span>Sprint {s.number}</span>
                   <span style={{ color: COLOURS.gold, fontWeight: 700 }}>
-                    {competition?.currency || "\u00A3"}{Math.round(totalPot * s.prizePercent / 100)}
+                    {competition?.currency || "£"}{Math.round(totalPot * s.prizePercent / 100)}
                   </span>
                 </div>
               ))}
               <div style={{ ...S.row, justifyContent: "space-between", borderBottom: "none" }}>
                 <span style={{ fontWeight: 700 }}>Overall Champion</span>
                 <span style={{ color: COLOURS.gold, fontWeight: 900 }}>
-                  {competition?.currency || "\u00A3"}{Math.round(totalPot * OVERALL_PRIZE_PERCENT / 100)}
+                  {competition?.currency || "£"}{Math.round(totalPot * OVERALL_PRIZE_PERCENT / 100)}
                 </span>
               </div>
             </div>
@@ -1273,7 +1273,7 @@ export default function App() {
                 <div style={{ fontSize: 12, color: COLOURS.dim, textTransform: "uppercase", letterSpacing: 2 }}>Overall Leader</div>
                 <div style={{ fontSize: 24, fontWeight: 900, color: COLOURS.gold, marginTop: 6 }}>{leaderboard[0].nickname || leaderboard[0].name}</div>
                 <div style={{ fontSize: 14, color: COLOURS.muted, marginTop: 4 }}>
-                  {(leaderboard[0].pctLoss || 0).toFixed(1)}% lost \u2013 pocketing {competition?.currency || "\u00A3"}{Math.round(totalPot * OVERALL_PRIZE_PERCENT / 100)} if it holds
+                  {(leaderboard[0].pctLoss || 0).toFixed(1)}% lost – pocketing {competition?.currency || "£"}{Math.round(totalPot * OVERALL_PRIZE_PERCENT / 100)} if it holds
                 </div>
               </div>
             )}
@@ -1299,7 +1299,7 @@ export default function App() {
               {adminStartDate && adminEndDate && (
                 <div style={{ fontSize: 11, color: COLOURS.dim, marginTop: 8, textAlign: "center" }}>
                   {Math.ceil((new Date(adminEndDate) - new Date(adminStartDate)) / (7 * 24 * 60 * 60 * 1000))} weeks
-                  {" Â· "}Sprints: {calculateSprintsFromDates(adminStartDate, adminEndDate).map((s) => `${s.startWeek}\u2013${s.endWeek}`).join(", ")}
+                  {" Â· "}Sprints: {calculateSprintsFromDates(adminStartDate, adminEndDate).map((s) => `${s.startWeek}–${s.endWeek}`).join(", ")}
                 </div>
               )}
             </div>
