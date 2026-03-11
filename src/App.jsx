@@ -3,12 +3,12 @@
 // ============================================================
 
 import { useState, useEffect, useCallback, useMemo } from "react";
-import {
+import 
   LineChart, Line, XAxis, YAxis, Tooltip,
   ResponsiveContainer, Legend,
 } from "recharts";
 
-import {
+import 
   db, auth, onAuthChange, signInWithGoogle, signInWithPhone,
   logOut, getCompetitionByCode, createCompetition, updateCompetition,
   createPlayer, getPlayerByAuthUid, addWeighin, updateWeighin, deleteWeighin,
@@ -253,9 +253,7 @@ export default function App() {
   // ---- CREATE COMPETITION ----
   const handleCreate = async () => {
     if (!formName.trim()) return setError("Name's empty. Who are you?");
-    if (!formWeight) return setError("Step on the scales first.");
-    const wErr = validateWeight(formWeight, formUnit);
-    if (wErr) return setError(wErr);
+    
     if (!formCode.trim()) return setError("You need an invite code. Make one up.");
 
     const code = formCode.trim().toUpperCase();
@@ -286,26 +284,20 @@ export default function App() {
 
     const newCompId = await createCompetition(compData);
     const playerId = makeId();
-    const weightKg = toKg(formWeight, formUnit);
+    
 
     await createPlayer(newCompId, playerId, {
       name: formName.trim(),
       nickname: formNickname.trim() || formName.trim(),
-      startWeight: weightKg,
+     
       preferredUnit: formUnit,
       paid: false,
       authUid: authUser.uid,
+      status: "pending",
       weeklyStreak: 0,
     });
 
-    await addWeighin(newCompId, {
-      playerId,
-      weight: weightKg,
-      shared: true,
-      note: "Starting weight",
-      weekNumber: getCompWeek(new Date(), startDt),
-      inWindow: isInWeighInWindow(new Date()),
-    });
+    
 
     // Write to users collection for cross-device support
     await setUserCompetition(authUser.uid, newCompId);
@@ -738,7 +730,7 @@ export default function App() {
                 <button key={u} style={unitBtnStyle(formUnit === u)} onClick={() => setFormUnit(u)}>{u}</button>
               ))}
             </div>
-            <input style={S.input} placeholder={`Starting weight (${formUnit})`} type="number" step="0.1" value={formWeight} onChange={(e) => setFormWeight(e.target.value)} />
+            
           </div>
           <div style={S.card}>
             <div style={S.cardTitle}>Competition Setup</div>
