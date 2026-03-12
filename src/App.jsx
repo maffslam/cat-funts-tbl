@@ -447,7 +447,7 @@ export default function App() {
     setError("");
 
     if (shareNow) {
-      showToast("Weigh-in shared! Nowhere to hide now. ð¯");
+      showToast("Weigh-in shared! Nowhere to hide now. 🎯");
     } else {
       showToast("Logged privately. Share when you're ready (or brave enough).");
     }
@@ -463,7 +463,7 @@ export default function App() {
       if (sd) setAdminStartDate(toISODate(sd));
       if (ed) setAdminEndDate(toISODate(ed));
       setAdminBuyIn(String(competition.buyIn ?? ""));
-      setAdminCurrency(competition.currency || "£");
+      setAdminCurrency((competition.currency || "£").replace("Â", ""));
       const w = competition.weighInWindow || {};
       setAdminDayStart(w.dayStart || "Saturday");
       setAdminTimeStart(w.timeStart || "06:00");
@@ -503,7 +503,7 @@ export default function App() {
   const shareWeighIn = async (weighinId) => {
     if (!compId) return;
     await updateWeighin(compId, weighinId, { shared: true });
-    showToast("Shared! Let them see it. ð");
+    showToast("Shared! Let them see it. 👀");
   };
 
   // ---- DELETE A WEIGH-IN ----
@@ -516,7 +516,7 @@ export default function App() {
     if (!compId) return;
     await deleteWeighin(compId, weighinId);
     setConfirmDelete(null);
-    showToast("Weigh-in deleted. Like it never happened. ðï¸");
+    showToast("Weigh-in deleted. Like it never happened. 🗑️");
   };
 
   // ---- TOGGLE PAID ----
@@ -532,23 +532,23 @@ export default function App() {
     if (!me || !myData) return "";
     const pct = myData.pctLoss;
     const dir = pct > 0 ? "down" : pct < 0 ? "up" : "unchanged";
-    const emoji = pct > 0 ? "ðð¥" : pct < 0 ? "ðð" : "ð";
+    const emoji = pct > 0 ? "📉🔥" : pct < 0 ? "📈🍔" : "😐";
     const banter = banterLine || "";
-    return `âï¸ FAT CUNTS âï¸\n${banter ? banter + "\n" : ""}\n${me.nickname}: ${Math.abs(pct || 0).toFixed(1)}% total ${dir} ${emoji}\nð ${myRank + 1}/${players.length} on the board\nâ±ï¸ ${daysLeft} days to go`;
+    return `⚖️ FAT CUNTS ⚖️\n${banter ? banter + "\n" : ""}\n${me.nickname}: ${Math.abs(pct || 0).toFixed(1)}% total ${dir} ${emoji}\n📊 ${myRank + 1}/${players.length} on the board\n⏱️ ${daysLeft} days to go`;
   };
 
   const genLeaderboardMsg = () => {
     if (leaderboard.length === 0) return "";
-    let msg = `ð FAT CUNTS – WEEK ${currentWeek} ð\n\n`;
+    let msg = `📋 FAT CUNTS – WEEK ${currentWeek} 📋\n\n`;
     leaderboard.forEach((p, i) => {
-      const medal = i === 0 ? "ð¥" : i === 1 ? "ð¥" : i === 2 ? "ð¥" : `${i + 1}.`;
-      const dir = (p.pctLoss || 0) > 0 ? "â" : p.pctLoss < 0 ? "â" : "–";
+      const medal = i === 0 ? "🥇" : i === 1 ? "🥈" : i === 2 ? "🥉" : `${i + 1}.`;
+      const dir = (p.pctLoss || 0) > 0 ? "↓" : p.pctLoss < 0 ? "↑" : "–";
       msg += `${medal} ${p.nickname}: ${(p.pctLoss || 0) !== 0 ? `${Math.abs(p.pctLoss || 0).toFixed(1)}% ${dir}` : "no change"}\n`;
     });
     if (currentSprint) {
       msg += `\nSprint ${currentSprint.number}: Week ${currentSprint.startWeek}–${currentSprint.endWeek}`;
     }
-    msg += `\n${daysLeft} days left. ${competition?.currency || "£"}${totalPot} in the pot. ð°`;
+    msg += `\n${daysLeft} days left. ${(competition?.currency || "£").replace("Â", "")}${totalPot} in the pot. 💰`;
     return msg;
   };
 
@@ -556,7 +556,7 @@ export default function App() {
     if (!results || results.length === 0) return "";
     const winner = results.find((r) => r.eligible);
     if (!winner) return "";
-    return `ð¨ FAT CUNTS – SPRINT ${sprint.number} RESULT ð¨\n\nð ${winner.nickname} takes it! ${(winner.pctChange || 0).toFixed(1)}% lost.\nPockets £${Math.round(totalPot * sprint.prizePercent / 100)}.\n\nSprint ${sprint.number + 1} starts now. All to play for.`;
+    return `🚨 FAT CUNTS – SPRINT ${sprint.number} RESULT 🚨\n\n👑 ${winner.nickname} takes it! ${(winner.pctChange || 0).toFixed(1)}% lost.\nPockets £${Math.round(totalPot * sprint.prizePercent / 100)}.\n\nSprint ${sprint.number + 1} starts now. All to play for.`;
   };
 
   // ---- MY CHART DATA ----
@@ -742,7 +742,7 @@ export default function App() {
             <input style={{ ...S.input, marginTop: 12 }} placeholder="Buy-in (£ per person)" type="number" value={formBuyIn} onChange={(e) => setFormBuyIn(e.target.value)} />
           </div>
           <button style={S.btnPrimary} onClick={handleCreate}>Let's F***ing Go</button>
-          <button style={S.btnGhost} onClick={() => { setView("home"); setError(""); }}>â Back</button>
+          <button style={S.btnGhost} onClick={() => { setView("home"); setError(""); }}>← Back</button>
         </div>
       </div>
     );
@@ -772,7 +772,7 @@ export default function App() {
             <input style={S.input} placeholder="Enter code from your mate" value={formCode} onChange={(e) => setFormCode(e.target.value)} maxLength={12} />
           </div>
           <button style={S.btnPrimary} onClick={handleJoin}>I'm In, Let's Go</button>
-          <button style={S.btnGhost} onClick={() => { setView("home"); setError(""); }}>â Back</button>
+          <button style={S.btnGhost} onClick={() => { setView("home"); setError(""); }}>← Back</button>
         </div>
       </div>
     );
@@ -817,7 +817,7 @@ export default function App() {
         <div style={S.subtitle}>
           {competition?.code} • {daysLeft} days left
           {myData?.streak >= 2 && (
-            <span style={{ color: COLOURS.gold, marginLeft: 8 }}>ð {myData.streak}wk</span>
+            <span style={{ color: COLOURS.gold, marginLeft: 8 }}>🔗 {myData.streak}wk</span>
           )}
         </div>
 
@@ -825,7 +825,7 @@ export default function App() {
         <div style={S.nav}>
           {(isAdmin ? ["dashboard", "weighin", "stats", "sprints", "charts", "pot", "admin"] : ["dashboard", "weighin", "stats", "sprints", "charts", "pot"]).map((v) => (
             <button key={v} style={navBtnStyle(view === v)} onClick={() => setView(v)}>
-              {v === "dashboard" ? "Board" : v === "weighin" ? "Weigh In" : v === "stats" ? "My Stats" : v === "sprints" ? "Sprints" : v === "charts" ? "Charts" : v === "pot" ? "Pot" : "â"}
+              {v === "dashboard" ? "Board" : v === "weighin" ? "Weigh In" : v === "stats" ? "My Stats" : v === "sprints" ? "Sprints" : v === "charts" ? "Charts" : v === "pot" ? "Pot" : "⚙"}
             </button>
           ))}
         </div>
@@ -860,7 +860,7 @@ export default function App() {
                 <div style={S.statLabel}>Days Left</div>
               </div>
               <div style={S.statBox}>
-                <div style={S.statVal}>{competition?.currency || "£"}{totalPot}</div>
+                <div style={S.statVal}>{(competition?.currency || "£").replace("Â", "")}{totalPot}</div>
                 <div style={S.statLabel}>Prize Pot</div>
               </div>
             </div>
@@ -869,7 +869,7 @@ export default function App() {
             {currentSprint && (
               <div style={{ ...S.card, padding: "12px 16px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                 <span style={{ fontSize: 12, color: COLOURS.gold, fontWeight: 700, textTransform: "uppercase", letterSpacing: 2 }}>
-                  ð Sprint {currentSprint.number}
+                  🏁 Sprint {currentSprint.number}
                 </span>
                 <span style={{ fontSize: 11, color: COLOURS.dim }}>
                   Weeks {currentSprint.startWeek}–{currentSprint.endWeek} • {Math.max(0, currentSprint.endWeek - currentWeek + 1)} wks left
@@ -895,7 +895,7 @@ export default function App() {
                             <span style={{ color: COLOURS.primary, fontSize: 11, marginLeft: 6 }}>YOU</span>
                           )}
                           {!p.isGhost && p.streak >= 3 && (
-                            <span style={{ color: COLOURS.gold, fontSize: 11, marginLeft: 6 }}>ð{p.streak}</span>
+                            <span style={{ color: COLOURS.gold, fontSize: 11, marginLeft: 6 }}>🔗{p.streak}</span>
                           )}
                           {p.isGhost && (
                             <span style={S.ghostBadge}>Awaiting weight</span>
@@ -920,18 +920,18 @@ export default function App() {
             {myData && (
               <div style={S.banterBox}>
                 {(() => {
-                  if (myData.isGhost) return "Get your weight in to claim your place! ðª";
+                  if (myData.isGhost) return "Get your weight in to claim your place! 💪";
                   const rank = myRank;
                   const total = leaderboard.filter((p) => !p.isGhost).length;
                   const pct = myData.pctLoss;
                   if (total <= 1) return "Billy no mates over here...";
                   if (pct === 0) return "Still on the sofa then?";
-                  if (rank === 0 && pct > 5) return "Absolutely cruising. They can smell the fear. ð";
-                  if (rank === 0) return "Top of the pile, you absolute machine ðª";
-                  if (rank === 1) return "Snapping at the leader's heels ð";
-                  if (rank === total - 1) return "Bringing up the rear. Classic. ð";
-                  if (myData.streak >= 4) return `${myData.streak}-week streak though. Respect the grind. ð`;
-                  return "Middle of the pack. Could go either way ð¤·";
+                  if (rank === 0 && pct > 5) return "Absolutely cruising. They can smell the fear. 👑";
+                  if (rank === 0) return "Top of the pile, you absolute machine 💪";
+                  if (rank === 1) return "Snapping at the leader's heels 🐕";
+                  if (rank === total - 1) return "Bringing up the rear. Classic. 🐌";
+                  if (myData.streak >= 4) return `${myData.streak}-week streak though. Respect the grind. 🔗`;
+                  return "Middle of the pack. Could go either way 🤷";
                 })()}
               </div>
             )}
@@ -939,7 +939,7 @@ export default function App() {
             {/* Wall of Shame */}
             {wallOfShame.length > 0 && (
               <div style={{ ...S.card, padding: 0, overflow: "hidden" }}>
-                <div style={{ ...S.cardTitle, padding: "16px 16px 10px" }}>ð«£ Wall of Shame</div>
+                <div style={{ ...S.cardTitle, padding: "16px 16px 10px" }}>🫣 Wall of Shame</div>
                 <div style={{ padding: "0 16px 6px", fontSize: 11, color: COLOURS.faint }}>
                   Dodging the scales? We see you.
                 </div>
@@ -991,7 +991,7 @@ export default function App() {
               </div>
               {isInWeighInWindow(new Date()) && (
                 <div style={{ fontSize: 11, color: COLOURS.green, textAlign: "center", marginTop: 6 }}>
-                  â Within the weekend weigh-in window
+                  ✓ Within the weekend weigh-in window
                 </div>
               )}
             </div>
@@ -1094,7 +1094,7 @@ export default function App() {
                               <button style={{ ...S.btnSmall, color: COLOURS.dim, borderColor: COLOURS.subtle }} onClick={() => setConfirmDelete(null)}>Cancel</button>
                             </div>
                           ) : (
-                            <button style={{ ...S.btnSmall, color: COLOURS.dim, borderColor: COLOURS.subtle, background: "transparent" }} onClick={() => setConfirmDelete(w.id)}>ðï¸</button>
+                            <button style={{ ...S.btnSmall, color: COLOURS.dim, borderColor: COLOURS.subtle, background: "transparent" }} onClick={() => setConfirmDelete(w.id)}>🗑️</button>
                           )
                         )}
                       </div>
@@ -1115,14 +1115,14 @@ export default function App() {
                 <div key={s.number} style={{ ...S.row, justifyContent: "space-between" }}>
                   <span style={{ fontWeight: 600 }}>Sprint {s.number} (Wks {s.startWeek}–{s.endWeek})</span>
                   <span style={{ color: COLOURS.gold, fontWeight: 700 }}>
-                    {s.prizePercent}% • {competition?.currency || "£"}{Math.round(totalPot * s.prizePercent / 100)}
+                    {s.prizePercent}% • {(competition?.currency || "£").replace("Â", "")}{Math.round(totalPot * s.prizePercent / 100)}
                   </span>
                 </div>
               ))}
               <div style={{ ...S.row, justifyContent: "space-between", borderBottom: "none" }}>
                 <span style={{ fontWeight: 600 }}>Overall Champion</span>
                 <span style={{ color: COLOURS.gold, fontWeight: 700 }}>
-                  {OVERALL_PRIZE_PERCENT}% • {competition?.currency || "£"}{Math.round(totalPot * OVERALL_PRIZE_PERCENT / 100)}
+                  {OVERALL_PRIZE_PERCENT}% • {(competition?.currency || "£").replace("Â", "")}{Math.round(totalPot * OVERALL_PRIZE_PERCENT / 100)}
                 </span>
               </div>
             </div>
@@ -1210,7 +1210,7 @@ export default function App() {
                       {me && p.id === me.id && <span style={{ color: COLOURS.primary, fontSize: 10, marginLeft: 6 }}>YOU</span>}
                     </div>
                     <div style={{ fontSize: 11, color: COLOURS.faint, marginTop: 2 }}>
-                      {fmtWeight(p.startWeight, p.preferredUnit || "kg")} â {fmtWeight(p.currentWeight, p.preferredUnit || "kg")} • {p.totalSharedWeighins} weigh-in{p.totalSharedWeighins !== 1 ? "s" : ""}
+                      {fmtWeight(p.startWeight, p.preferredUnit || "kg")} → {fmtWeight(p.currentWeight, p.preferredUnit || "kg")} • {p.totalSharedWeighins} weigh-in{p.totalSharedWeighins !== 1 ? "s" : ""}
                     </div>
                   </div>
                   <div style={pctStyle(p.pctLoss)}>
@@ -1227,10 +1227,10 @@ export default function App() {
           <>
             <div style={S.card}>
               <div style={S.statBox}>
-                <div style={{ ...S.statVal, fontSize: 42 }}>{competition?.currency || "£"}{totalPot}</div>
+                <div style={{ ...S.statVal, fontSize: 42 }}>{(competition?.currency || "£").replace("Â", "")}{totalPot}</div>
                 <div style={S.statLabel}>Total Pot</div>
                 <div style={{ color: COLOURS.faint, fontSize: 12, marginTop: 8 }}>
-                  {competition?.currency || "£"}{competition?.buyIn || 0} per person
+                  {(competition?.currency || "£").replace("Â", "")}{competition?.buyIn || 0} per person
                 </div>
               </div>
             </div>
@@ -1242,14 +1242,14 @@ export default function App() {
                 <div key={s.number} style={{ ...S.row, justifyContent: "space-between" }}>
                   <span>Sprint {s.number}</span>
                   <span style={{ color: COLOURS.gold, fontWeight: 700 }}>
-                    {competition?.currency || "£"}{Math.round(totalPot * s.prizePercent / 100)}
+                    {(competition?.currency || "£").replace("Â", "")}{Math.round(totalPot * s.prizePercent / 100)}
                   </span>
                 </div>
               ))}
               <div style={{ ...S.row, justifyContent: "space-between", borderBottom: "none" }}>
                 <span style={{ fontWeight: 700 }}>Overall Champion</span>
                 <span style={{ color: COLOURS.gold, fontWeight: 900 }}>
-                  {competition?.currency || "£"}{Math.round(totalPot * OVERALL_PRIZE_PERCENT / 100)}
+                  {(competition?.currency || "£").replace("Â", "")}{Math.round(totalPot * OVERALL_PRIZE_PERCENT / 100)}
                 </span>
               </div>
             </div>
@@ -1261,7 +1261,7 @@ export default function App() {
                 <div key={p.id} style={{ ...S.row, justifyContent: "space-between" }}>
                   <span style={{ fontWeight: 600 }}>{p.nickname || p.name}</span>
                   <button style={paidBtnStyle(p.paid)} onClick={() => togglePaid(p.id)}>
-                    {p.paid ? "â Paid" : "â Unpaid"}
+                    {p.paid ? "✓ Paid" : "✗ Unpaid"}
                   </button>
                 </div>
               ))}
@@ -1273,7 +1273,7 @@ export default function App() {
                 <div style={{ fontSize: 12, color: COLOURS.dim, textTransform: "uppercase", letterSpacing: 2 }}>Overall Leader</div>
                 <div style={{ fontSize: 24, fontWeight: 900, color: COLOURS.gold, marginTop: 6 }}>{leaderboard[0].nickname || leaderboard[0].name}</div>
                 <div style={{ fontSize: 14, color: COLOURS.muted, marginTop: 4 }}>
-                  {(leaderboard[0].pctLoss || 0).toFixed(1)}% lost – pocketing {competition?.currency || "£"}{Math.round(totalPot * OVERALL_PRIZE_PERCENT / 100)} if it holds
+                  {(leaderboard[0].pctLoss || 0).toFixed(1)}% lost – pocketing {(competition?.currency || "£").replace("Â", "")}{Math.round(totalPot * OVERALL_PRIZE_PERCENT / 100)} if it holds
                 </div>
               </div>
             )}
@@ -1299,7 +1299,7 @@ export default function App() {
               {adminStartDate && adminEndDate && (
                 <div style={{ fontSize: 11, color: COLOURS.dim, marginTop: 8, textAlign: "center" }}>
                   {Math.ceil((new Date(adminEndDate) - new Date(adminStartDate)) / (7 * 24 * 60 * 60 * 1000))} weeks
-                  {" Â· "}Sprints: {calculateSprintsFromDates(adminStartDate, adminEndDate).map((s) => `${s.startWeek}–${s.endWeek}`).join(", ")}
+                  {" · "}Sprints: {calculateSprintsFromDates(adminStartDate, adminEndDate).map((s) => `${s.startWeek}–${s.endWeek}`).join(", ")}
                 </div>
               )}
             </div>
