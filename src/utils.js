@@ -17,6 +17,7 @@ export const toKg = (weight, unit) => {
 
 /** Convert from kg to user's preferred unit */
 export const fromKg = (kg, unit) => {
+  if (kg == null) return 0;
   if (unit === "lbs") return kg / 0.453592;
   if (unit === "st") return kg / 6.35029;
   return kg;
@@ -25,19 +26,19 @@ export const fromKg = (kg, unit) => {
 /** Format a weight value with its unit label */
 export const fmtWeight = (kg, unit, decimals = 1) => {
   const val = fromKg(kg, unit);
-  return `${val.toFixed(decimals)}${unit}`;
+  return `${(val || 0).toFixed(decimals)}${unit}`;
 };
 
-/** Validate a weight entry â returns error string or null */
+/** Validate a weight entry – returns error string or null */
 export const validateWeight = (weight, unit) => {
   const w = parseFloat(weight);
   if (isNaN(w) || w <= 0) return "That's not a real weight. Try again.";
   if (unit === "kg" && (w < 30 || w > 300))
-    return "Between 30â300kg please. You're not a small child or an elephant.";
+    return "Between 30–300kg please. You're not a small child or an elephant.";
   if (unit === "lbs" && (w < 66 || w > 660))
-    return "Between 66â660lbs please. Be serious.";
+    return "Between 66–660lbs please. Be serious.";
   if (unit === "st" && (w < 4 || w > 47))
-    return "Between 4â47 stone please. Come on.";
+    return "Between 4–47 stone please. Come on.";
   return null;
 };
 
@@ -45,17 +46,17 @@ export const validateWeight = (weight, unit) => {
 
 /** Format a date or timestamp to "8 Mar" style */
 export const fmtDate = (d) => {
-  if (!d) return "â";
+  if (!d) return "–";
   const date = d instanceof Date ? d : fromTimestamp(d);
-  if (!date) return "â";
+  if (!date) return "–";
   return date.toLocaleDateString("en-GB", { day: "numeric", month: "short" });
 };
 
 /** Format full date "8 Mar 2025" */
 export const fmtDateFull = (d) => {
-  if (!d) return "â";
+  if (!d) return "–";
   const date = d instanceof Date ? d : fromTimestamp(d);
-  if (!date) return "â";
+  if (!date) return "–";
   return date.toLocaleDateString("en-GB", {
     day: "numeric",
     month: "short",
@@ -107,7 +108,7 @@ export const getISOWeek = (d) => {
   );
 };
 
-/** Check if a date falls within the Sat 06:00 â Sun 23:59 weigh-in window */
+/** Check if a date falls within the Sat 06:00 – Sun 23:59 weigh-in window */
 export const isInWeighInWindow = (date) => {
   const d = date instanceof Date ? date : fromTimestamp(date);
   if (!d) return false;
@@ -118,7 +119,7 @@ export const isInWeighInWindow = (date) => {
   return false;
 };
 
-/** Get the "weigh-in week" identifier for a given date (SatâSun window)
+/** Get the "weigh-in week" identifier for a given date (Sat–Sun window)
  *  Returns a string like "2025-W12" for grouping weekend weigh-ins */
 export const getWeighInWeek = (date, startDate) => {
   const d = date instanceof Date ? date : fromTimestamp(date);
@@ -478,7 +479,7 @@ export const calcConsolationPrizes = (players, weighins, totalWeeks, startDate) 
   if (perfectAttendance.length > 0) {
     awards.push({
       title: "Most Consistent",
-      icon: "ð",
+      icon: "📅",
       players: perfectAttendance.map((p) => p.nickname || p.name),
       desc: `Weighed in every single weekend. ${perfectAttendance.length > 1 ? "Shared honour." : "Absolute machine."}`,
     });
@@ -505,14 +506,14 @@ export const calcConsolationPrizes = (players, weighins, totalWeeks, startDate) 
   if (biggestDrop.playerId) {
     awards.push({
       title: "Biggest Single Week Drop",
-      icon: "ð",
+      icon: "📉",
       players: [biggestDrop.nickname],
       desc: `${biggestDrop.pct.toFixed(1)}% in one go. One glorious moment.`,
     });
   }
 
   // Most Improved (biggest rank improvement from lowest-ever position)
-  // This requires historical rank tracking â simplified: compare earliest rank to final
+  // This requires historical rank tracking – simplified: compare earliest rank to final
   const leaderboard = buildLeaderboard(players, weighins, startDate);
   // For simplicity, track "most improved" as biggest jump in the final ranking
   // vs the mid-competition low point (approximated)
@@ -522,7 +523,7 @@ export const calcConsolationPrizes = (players, weighins, totalWeeks, startDate) 
     const last = leaderboard[leaderboard.length - 1];
     awards.push({
       title: "Wooden Spoon",
-      icon: "ð¥",
+      icon: "🥄",
       players: [last.nickname || last.name],
       desc: "Dead last. Pure shame.",
     });
